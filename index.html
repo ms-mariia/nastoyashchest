@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>тест на настоящесть</title>
+<link rel="icon" href="e/sparkling_heart.png">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+@font-face{font-family:"Rubik Dirt";src:url(f/dirt.woff) format("woff");font-display:swap}
+@font-face{font-family:"Rubik Wet Paint";src:url(f/wet.woff) format("woff");font-display:swap}
+@font-face{font-family:"Rubik";src:url(f/rubik.woff) format("woff");font-weight:300 900;font-display:swap}
+:root{
+  --baby:#ffe3ee; --soft:#ffc2d9; --pink:#ff8fb8; --hot:#ff4f8b; --rose:#e8325f; --deep:#3b0a1f; --ink:#2a0614;
+  --cloud:#fff6fa;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:"Rubik Dirt","Rubik",system-ui,sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(120% 70% at 50% 0%, #ffd6e6 0%, transparent 60%),
+    radial-gradient(90% 60% at 100% 100%, #ff9cc2 0%, transparent 60%),
+    linear-gradient(170deg, #ffc8dc 0%, #ffb0cc 45%, #ff8fb4 100%);
+  background-attachment:fixed;
+  overflow-x:hidden;
+  min-height:100vh;
+}
+/* ---------- falling stuff ---------- */
+#sky{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.fall{position:absolute;top:-80px;will-change:transform;animation:fall linear forwards}
+.fall svg,.fall img{display:block;width:100%;height:100%}
+.sway{animation:sway ease-in-out infinite alternate}
+@keyframes fall{to{transform:translateY(calc(100vh + 160px))}}
+@keyframes sway{from{transform:translateX(-14px) rotate(-12deg)}to{transform:translateX(14px) rotate(12deg)}}
+
+/* ---------- layout ---------- */
+#app{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:22px 18px 40px;min-height:100vh;display:flex;flex-direction:column;gap:18px}
+.screen{display:none;flex-direction:column;gap:18px;animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+.screen.on{display:flex}
+@keyframes pop{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:none}}
+
+h1{
+  font-family:"Rubik Wet Paint",cursive;font-weight:400;
+  font-size:clamp(40px,11vw,60px);line-height:.95;text-align:center;
+  color:var(--deep);
+  text-shadow:3px 3px 0 var(--hot), 6px 6px 0 rgba(59,10,31,.18);
+  letter-spacing:.5px;
+}
+.date{
+  align-self:center;font-family:"Rubik",sans-serif;font-weight:900;font-size:13px;letter-spacing:3px;
+  color:var(--cloud);background:var(--deep);padding:7px 16px;border-radius:999px;
+  box-shadow:0 4px 0 var(--rose);
+}
+
+/* ---------- fluffy cloud bubble ---------- */
+.bubble{
+  position:relative;background:var(--cloud);border-radius:34px;padding:22px 20px;
+  filter:drop-shadow(0 8px 0 rgba(232,50,95,.25)) drop-shadow(0 14px 22px rgba(160,20,70,.22));
+  margin:14px 12px;
+}
+.bubble::before{
+  content:"";position:absolute;inset:-13px;border-radius:40px;z-index:-1;
+  background:radial-gradient(circle, var(--cloud) 48%, transparent 51%) 0 0/26px 26px round;
+}
+.bubble::after{ /* little puff tail */
+  content:"";position:absolute;width:26px;height:26px;border-radius:50%;background:var(--cloud);
+  left:22px;bottom:-34px;box-shadow:-18px 20px 0 -6px var(--cloud);
+}
+.bubble.notail::after{display:none}
+
+.lead{font-size:21px;line-height:1.35;text-align:center}
+.lead b{font-family:"Rubik",sans-serif;font-weight:900}
+.emo{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.28em;margin:0 .05em}
+.big-emo{width:96px;height:96px;align-self:center;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px) rotate(-4deg)}}
+
+.rules{list-style:none;display:flex;flex-direction:column;gap:11px;font-size:16.5px;line-height:1.35}
+.rules li{display:flex;gap:10px;align-items:flex-start}
+.rules li .emo{flex:none;margin-top:1px}
+.rules-title{font-family:"Rubik Wet Paint",cursive;font-size:30px;text-align:center;color:var(--rose);margin-bottom:12px}
+
+/* ---------- buttons ---------- */
+.btn{
+  font-family:"Rubik Dirt",sans-serif;font-size:22px;color:var(--cloud);
+  background:var(--deep);border:none;border-radius:999px;padding:16px 26px;cursor:pointer;
+  box-shadow:0 6px 0 var(--rose), 0 12px 20px rgba(59,10,31,.3);
+  transition:transform .12s, box-shadow .12s;align-self:center;min-width:230px;
+}
+.btn:active{transform:translateY(5px);box-shadow:0 1px 0 var(--rose)}
+.btn:disabled{opacity:.4;pointer-events:none}
+.btn.light{background:var(--hot);box-shadow:0 6px 0 var(--deep)}
+
+/* ---------- quiz ---------- */
+.top{display:flex;align-items:center;gap:12px;font-family:"Rubik",sans-serif;font-weight:900;color:var(--deep);font-size:14px}
+.bar{flex:1;height:14px;border-radius:99px;background:rgba(255,255,255,.55);overflow:hidden;box-shadow:inset 0 2px 0 rgba(59,10,31,.12)}
+.bar i{display:block;height:100%;width:0;background:repeating-linear-gradient(45deg,var(--hot) 0 10px,var(--rose) 10px 20px);border-radius:99px;transition:width .5s}
+.score-pill{background:var(--deep);color:var(--cloud);padding:6px 12px;border-radius:99px;white-space:nowrap}
+
+.qhead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.tag{font-family:"Rubik",sans-serif;font-weight:700;font-size:12.5px;padding:5px 11px;border-radius:99px;background:var(--baby);color:var(--rose);border:2px dashed var(--pink)}
+.tag.pts{background:var(--hot);color:#fff;border-color:var(--hot)}
+.tag.search{background:#fff;color:var(--deep);border-style:solid}
+.qnum{font-family:"Rubik Wet Paint",cursive;font-size:30px;color:var(--rose);line-height:1}
+.qtext{font-size:23px;line-height:1.3}
+.qtext b{font-family:"Rubik",sans-serif;font-weight:900;text-decoration:underline wavy var(--hot) 2px;text-underline-offset:4px}
+
+.opts{display:flex;flex-direction:column;gap:11px}
+.opt{
+  position:relative;text-align:left;font-family:"Rubik Dirt",sans-serif;font-size:19px;color:var(--ink);
+  background:#fff;border:3px solid var(--soft);border-radius:22px;padding:14px 16px 14px 52px;cursor:pointer;
+  box-shadow:0 4px 0 var(--soft);transition:transform .12s,border-color .15s,background .15s;
+}
+.opt::before{
+  content:"";position:absolute;left:15px;top:50%;width:24px;height:24px;margin-top:-12px;
+  border:3px solid var(--pink);border-radius:50%;background:#fff;transition:.15s;
+}
+.multi .opt::before{border-radius:8px}
+.opt.sel{border-color:var(--hot);background:var(--baby)}
+.opt.sel::before{background:var(--hot);border-color:var(--hot);box-shadow:inset 0 0 0 4px #fff}
+.opt:active{transform:scale(.98)}
+.opt img.mark{position:absolute;right:12px;top:50%;width:30px;height:30px;margin-top:-15px}
+.locked .opt{pointer-events:none}
+.opt.ok{border-color:var(--deep);background:linear-gradient(90deg,#ffe0ec,#fff);box-shadow:0 4px 0 var(--deep)}
+.opt.bad{border-color:var(--rose);background:#fff;opacity:.8}
+.opt.bad span{text-decoration:line-through wavy var(--rose) 2px}
+.opt.missed{border-style:dashed;border-color:var(--deep)}
+
+.verdict{text-align:center;font-size:21px;min-height:1px}
+.verdict .plus{font-family:"Rubik",sans-serif;font-weight:900;color:var(--rose)}
+
+/* ---------- result & prize ---------- */
+.result-num{font-family:"Rubik Wet Paint",cursive;font-size:76px;line-height:1;text-align:center;color:var(--deep);text-shadow:4px 4px 0 var(--hot)}
+.result-pct{font-family:"Rubik",sans-serif;font-weight:900;text-align:center;font-size:20px;color:var(--rose);margin-top:6px}
+.steps{list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:13px;font-size:17px;line-height:1.35}
+.steps li{counter-increment:s;display:flex;gap:12px}
+.steps li::before{content:counter(s);flex:none;width:30px;height:30px;border-radius:50%;background:var(--hot);color:#fff;font-family:"Rubik",sans-serif;font-weight:900;display:grid;place-items:center;font-size:15px}
+.steps a{color:var(--rose);font-family:"Rubik",sans-serif;font-weight:900}
+.woof{font-size:36px;line-height:1.1;text-align:center}
+.woof b{font-family:"Rubik",sans-serif;font-weight:900;color:var(--rose)}
+.code-box{
+  font-family:"Rubik",sans-serif;font-weight:900;font-size:24px;letter-spacing:2px;text-align:center;word-break:break-all;
+  background:var(--deep);color:var(--cloud);border-radius:20px;padding:18px;border:3px dashed var(--hot);user-select:all;
+}
+.small{font-family:"Rubik",sans-serif;font-weight:500;font-size:13px;text-align:center;color:var(--deep);opacity:.7}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(100px);background:var(--deep);color:#fff;font-family:"Rubik",sans-serif;font-weight:700;padding:11px 18px;border-radius:99px;z-index:9;transition:transform .3s}
+#toast.on{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div id="sky"></div>
+
+<main id="app">
+
+  <!-- welcome -->
+  <section class="screen on" id="s-welcome">
+    <span class="date">21 · 12</span>
+    <h1>тест на настоящесть</h1>
+    <img class="big-emo" src="e/heart_with_ribbon.png" alt="">
+    <div class="bubble">
+      <p class="lead">поздравляю тебя с нашей <b>первой годовщиной</b> <img class="emo" src="e/sparkling_heart.png" alt=""><br><br>
+      внимательно читай вопросы и ознакомься с правилами.<br>приз будет того стоить <img class="emo" src="e/wrapped_gift.png" alt=""></p>
+    </div>
+    <div class="bubble notail">
+      <div class="rules-title">правила</div>
+      <ul class="rules">
+        <li><img class="emo" src="e/pink_heart.png" alt=""><span>20 вопросов, максимум 100 баллов</span></li>
+        <li><img class="emo" src="e/sparkles.png" alt=""><span>сколько стоит вопрос, написано прямо рядом с ним</span></li>
+        <li><img class="emo" src="e/check_mark_button.png" alt=""><span>правильный ответ — 4 балла</span></li>
+        <li><img class="emo" src="e/two_hearts.png" alt=""><span>где написано «можно выбрать несколько»: каждый верный вариант +4, каждый неверный −4. меньше нуля за вопрос не уйдёшь, но и халявы не будет</span></li>
+        <li><img class="emo" src="e/magnifying_glass_tilted_left.png" alt=""><span>лупа значит, что ответ можно поискать — в нашей переписке или в интернете</span></li>
+        <li><img class="emo" src="e/cross_mark.png" alt=""><span>после «ответить» передумать уже нельзя</span></li>
+      </ul>
+    </div>
+    <button class="btn" id="go">начать</button>
+  </section>
+
+  <!-- question -->
+  <section class="screen" id="s-quiz">
+    <div class="top">
+      <span id="qcount">1/20</span>
+      <div class="bar"><i id="bar"></i></div>
+      <span class="score-pill" id="score">0 б.</span>
+    </div>
+    <div class="bubble notail">
+      <div class="qhead" id="qhead"></div>
+      <p class="qtext" id="qtext"></p>
+    </div>
+    <div class="opts" id="opts"></div>
+    <p class="verdict" id="verdict"></p>
+    <button class="btn" id="act" disabled>ответить</button>
+  </section>
+
+  <!-- result -->
+  <section class="screen" id="s-result">
+    <h1>итог</h1>
+    <img class="big-emo" src="e/trophy.png" alt="">
+    <div class="bubble notail">
+      <div class="result-num" id="rnum">0</div>
+      <div class="result-pct" id="rpct"></div>
+      <p class="lead" id="rtext" style="margin-top:14px"></p>
+    </div>
+    <button class="btn light" id="toPrize">забрать приз</button>
+  </section>
+
+  <!-- prize -->
+  <section class="screen" id="s-prize">
+    <div class="bubble">
+      <p class="woof">who's momma's good boy? <img class="emo" src="e/dog_face.png" alt=""></p>
+      <p class="woof" style="font-size:27px;margin-top:12px">you <b>are</b><br>good pup deserves a good treat! <img class="emo" src="e/paw_prints.png" alt=""></p>
+    </div>
+    <div class="bubble notail">
+      <div class="rules-title">как получить вкусняшку</div>
+      <ol class="steps">
+        <li><span>возьми ноутбук <img class="emo" src="e/laptop.png" alt=""> и открой браузер</span></li>
+        <li><span>зайди на <a href="https://redeem.microsoft.com" id="redeemLink">redeem.microsoft.com</a></span></li>
+        <li><span>войди в свою учётную запись Microsoft — ту же, в которой ты сидишь на ноуте</span></li>
+        <li><span>в поле для кода вставь код ниже и нажми «далее»</span></li>
+        <li><span>подтверди — и посмотри, что тебе досталось <img class="emo" src="e/smiling_face_with_hearts.png" alt=""></span></li>
+        <li><span>потом открой Microsoft Store → «библиотека» и установи то, что там появилось</span></li>
+      </ol>
+    </div>
+    <div class="bubble notail" style="display:flex;flex-direction:column;gap:14px">
+      <p class="lead">твой код <img class="emo" src="e/old_key.png" alt=""></p>
+      <div class="code-box" id="code">нажми, чтобы открыть</div>
+      <button class="btn" id="copy" style="display:none">скопировать</button>
+    </div>
+  </section>
+
+</main>
+<div id="toast"></div>
+
+<script>
+/* ===================== ПРИЗ =====================
+   код хранится в перевёрнутом base64, чтобы его не было видно в коде страницы.
+   сейчас тут "woof". */
+const PRIZE = atob("==gZv92d".split("").reverse().join(""));
+
+/* ===================== ВОПРОСЫ ===================== */
+const Q = [
+ {t:"когда я начала работать по профессии (филолог, лингвист, переводчик, педагог)?",
+  o:["14 декабря 2024","3 декабря 2025","20 января 2024","28 ноября 2024","25 ноября 2025"],a:[3]},
+ {t:"как звали моего первого ученика?",s:"можно искать в нашей переписке",
+  o:["Катя","Полина","Богдан","Яна","Аня"],a:[1]},
+ {t:"какое было моё первое слово?",
+  o:["мама","чёрт!","папа","«не голосуйте за Зеленского»","дай"],a:[4]},
+ {t:"кем я хотела стать в детстве?",
+  o:["моделью","учителем","стюардессой","президентом","врачом"],a:[3]},
+ {t:"во сколько лет у меня появился первый компьютер (ноутбук) и я впервые начала играть?",
+  o:["в 6","в 8","в 5","в 7"],a:[3]},
+ {t:"сколько лет прослужил мне мой первый ноутбук Samsung?",
+  o:["6 лет","10 лет","4 года","12 лет","8 лет"],a:[1]},
+ {t:"какие у меня любимые цвета?",m:1,
+  o:["красный","чёрный","коричневый","лиловый","белый"],a:[0,1,3,4]},
+ {t:"во сколько лет мне диагностировали депрессивное расстройство?",
+  o:["в 11","в 19","в 14","в 16","в 15"],a:[4]},
+ {t:"что неиронично вывело меня из депрессии?",
+  o:["посиделки с друзьями","летсплеи по Майнкрафту","никотин и алкоголь","видео Анны Мацкевич и Genshin Impact","гастротуры"],a:[3]},
+ {t:"какой мой любимый сок?",
+  o:["мультифрукт","гранатовый","яблочный","манговый","банановый"],a:[4]},
+ {t:"какие мои любимые коктейли?",m:1,
+  o:["голубая лагуна","пина колада","апероль шприц","порнстар мартини","секс на пляже"],a:[1,3]},
+ {t:"моя любимая стихия в Genshin Impact?",
+  o:["гидро","анемо","крио","гео","пиро","электро"],a:[4]},
+ {t:"мой любимый персонаж?",
+  o:["Арлекино","Кли","Тиори","Мику","Алиса"],a:[1]},
+ {t:"кем является мама Кли?",m:1,s:"можно гуглить и искать в переписке",
+  o:["рыцарь","учёная","послушница","содержанка","колдунья (маг)"],a:[1,4]},
+ {t:"как по-английски называется мой цвет глаз?",
+  o:["oak","earthy","grass","hazel","deepwood"],a:[3]},
+ {t:"что тебе во мне понравилось больше всего <b>с самого начала</b>?",
+  o:["терпение","чувство юмора","характер","социотип","уступчивость"],a:[1]},
+ {t:"в каком порядке шли мои результаты по соционике, начиная с 14 лет, когда я впервые прошла тест?",
+  o:["Есенин → Бальзак","Бальзак → Есенин → Дон Кихот","Есенин → Дон Кихот → Бальзак → Дон Кихот","Есенин → Бальзак → Дон Кихот"],a:[3]},
+ {t:"какой у меня темперамент?",s:"описания типов можно прочитать в гугле",
+  o:["холерик","холерик-сангвиник","флегматик","меланхолик-сангвиник"],a:[1]},
+ {t:"какая игрушка сидит у меня на раме кровати?",
+  o:["плюшевый коричневый мишка","плюшевая белая крыса","плюшевая Марионетка из Five Nights at Freddy's 2","плюшевый бежевый кролик"],a:[3]},
+ {t:"какое отчество у моей мамы?",
+  o:["Константиновна","Олеговна","Вячеславовна","Владимировна","Дмитриевна"],a:[3]},
+];
+
+/* ===================== TELEGRAM ===================== */
+const tg = window.Telegram && Telegram.WebApp;
+try{ tg.ready(); tg.expand(); tg.setHeaderColor("#ffc8dc"); tg.setBackgroundColor("#ffb0cc"); }catch(e){}
+const haptic = t => { try{ tg.HapticFeedback.impactOccurred(t||"light"); }catch(e){} };
+
+/* ===================== STATE ===================== */
+let i=0, total=0, picked=new Set(), answered=false;
+const $=id=>document.getElementById(id);
+const show=id=>{document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));$(id).classList.add("on");window.scrollTo({top:0,behavior:"smooth"});};
+const maxOf=q=>q.a.length*4;
+const E=n=>`<img class="emo" src="e/${n}.png" alt="">`;
+
+$("go").onclick=()=>{haptic("medium");show("s-quiz");render();};
+
+function render(){
+  const q=Q[i]; picked.clear(); answered=false;
+  $("qcount").textContent=`${i+1}/${Q.length}`;
+  $("bar").style.width=(i/Q.length*100)+"%";
+  $("score").textContent=`${total} б.`;
+  let h=`<span class="qnum">${i+1}</span><span class="tag pts">${q.m?"до ":""}${maxOf(q)} б.</span>`;
+  if(q.m) h+=`<span class="tag">можно выбрать несколько</span>`;
+  if(q.s) h+=`<span class="tag search">🔍 ${q.s}</span>`.replace("🔍",E("magnifying_glass_tilted_left"));
+  $("qhead").innerHTML=h;
+  $("qtext").innerHTML=q.t;
+  const box=$("opts"); box.className="opts"+(q.m?" multi":""); box.innerHTML="";
+  q.o.forEach((txt,k)=>{
+    const b=document.createElement("button"); b.className="opt"; b.innerHTML=`<span>${txt}</span>`;
+    b.onclick=()=>{
+      haptic();
+      if(q.m){ picked.has(k)?picked.delete(k):picked.add(k); }
+      else { picked.clear(); picked.add(k); }
+      [...box.children].forEach((c,j)=>c.classList.toggle("sel",picked.has(j)));
+      $("act").disabled=picked.size===0;
+    };
+    box.appendChild(b);
+  });
+  $("verdict").innerHTML="";
+  $("act").textContent="ответить"; $("act").disabled=true;
+}
+
+$("act").onclick=()=>{
+  if(!answered){ check(); }
+  else { i++; if(i<Q.length) render(); else finish(); }
+};
+
+function check(){
+  const q=Q[i]; answered=true;
+  const box=$("opts"); box.classList.add("locked");
+  let pts=0;
+  [...box.children].forEach((c,k)=>{
+    const right=q.a.includes(k), sel=picked.has(k);
+    c.classList.remove("sel");
+    if(sel&&right){c.classList.add("ok");pts+=4;c.insertAdjacentHTML("beforeend",`<img class="mark" src="e/check_mark_button.png" alt="">`);}
+    else if(sel&&!right){c.classList.add("bad");pts-=4;c.insertAdjacentHTML("beforeend",`<img class="mark" src="e/cross_mark.png" alt="">`);}
+    else if(!sel&&right){c.classList.add("ok","missed");}
+  });
+  pts=Math.max(0,pts); total+=pts;
+  $("score").textContent=`${total} б.`;
+  const full=pts===maxOf(q);
+  $("verdict").innerHTML = full ? `${E("sparkling_heart")} <span class="plus">+${pts}</span> умничка`
+    : pts>0 ? `${E("pink_heart")} <span class="plus">+${pts}</span> почти`
+    : `${E("cross_mark")} <span class="plus">+0</span> ну ты чего`;
+  haptic(full?"medium":"heavy");
+  if(full) burst();
+  $("act").textContent = i<Q.length-1 ? "дальше" : "узнать результат";
+}
+
+function finish(){
+  $("bar").style.width="100%";
+  show("s-result");
+  const pct=Math.round(total/100*100);
+  let n=0; const t=setInterval(()=>{n=Math.min(total,n+2);$("rnum").textContent=n;if(n>=total)clearInterval(t);},30);
+  $("rpct").textContent=`${total} из 100 · ${pct}%`;
+  $("rtext").innerHTML = pct>=90 ? `ты самый настоящий. сомнений нет ${E("smiling_face_with_hearts")}`
+    : pct>=70 ? `настоящий, но домашку ещё поделать придётся ${E("two_hearts")}`
+    : pct>=50 ? `хм. настоящесть под вопросом, будем работать ${E("growing_heart")}`
+    : `так. нам надо серьёзно поговорить ${E("cross_mark")}`;
+  for(let k=0;k<3;k++) setTimeout(burst,k*350);
+}
+
+$("toPrize").onclick=()=>{haptic("medium");show("s-prize");burst();};
+$("code").onclick=()=>{
+  if($("code").dataset.open) return;
+  $("code").dataset.open=1; $("code").textContent=PRIZE; $("copy").style.display="";
+  haptic("heavy"); burst(); burst();
+};
+$("copy").onclick=async()=>{
+  try{ await navigator.clipboard.writeText(PRIZE); }catch(e){
+    const r=document.createRange(); r.selectNodeContents($("code")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand("copy");
+  }
+  toast("скопировано");
+};
+$("redeemLink").onclick=e=>{ if(tg&&tg.openLink){ e.preventDefault(); tg.openLink("https://redeem.microsoft.com"); } };
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1600);}
+
+/* ===================== HEARTS & BALLOONS ===================== */
+const sky=$("sky");
+const SHADES=["#ffe3ee","#ffc2d9","#ff8fb8","#ff6fa1","#ff4f8b","#e8325f","#fff0f6"];
+const heartSVG=c=>`<svg viewBox="0 0 32 29"><path fill="${c}" d="M16 29S0 19.5 0 8.6C0 3.8 3.7 0 8.3 0c3.2 0 6 1.8 7.7 4.5C17.7 1.8 20.5 0 23.7 0 28.3 0 32 3.8 32 8.6 32 19.5 16 29 16 29z"/></svg>`;
+function drop(kind){
+  const d=document.createElement("div"); d.className="fall";
+  const inner=document.createElement("div"); inner.className="sway";
+  let size,dur,op;
+  if(kind==="balloon"){
+    size=46+Math.random()*26; dur=13+Math.random()*6; op=.75;
+    const hue=Math.random()<.5?"":"filter:hue-rotate(-25deg) saturate(.75) brightness(1.25)";
+    inner.innerHTML=`<img src="e/balloon.png" alt="" style="${hue}">`;
+  }else{
+    size=14+Math.random()*30; dur=7+Math.random()*7; op=.3+Math.random()*.35;
+    inner.innerHTML=heartSVG(SHADES[Math.random()*SHADES.length|0]);
+  }
+  d.style.cssText=`left:${Math.random()*100}vw;width:${size}px;height:${size*(kind==="balloon"?1:.9)}px;opacity:${op};animation-duration:${dur}s`;
+  inner.style.cssText=`width:100%;height:100%;animation-duration:${1.8+Math.random()*2}s`;
+  d.appendChild(inner); sky.appendChild(d);
+  setTimeout(()=>d.remove(),dur*1000+200);
+}
+setInterval(()=>drop("heart"),380);
+setInterval(()=>{ if(Math.random()<.55) drop("balloon"); },3200);
+for(let k=0;k<10;k++) setTimeout(()=>drop("heart"),k*120);
+function burst(){ for(let k=0;k<14;k++) setTimeout(()=>drop("heart"),k*40); }
+</script>
+</body>
+</html>
